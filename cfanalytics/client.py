@@ -4,6 +4,10 @@ from typing import Any, Dict, List
 import requests
 
 
+class CloudflareGraphQLError(RuntimeError):
+    """Raised when Cloudflare returns GraphQL errors in a successful HTTP response."""
+
+
 class CloudflareClient:
     """Client for interacting with Cloudflare REST and GraphQL APIs."""
 
@@ -15,6 +19,31 @@ class CloudflareClient:
             "Content-Type": "application/json",
         }
         super().__init__()
+
+    def _post_graphql(self, query: str, resource: str) -> Dict[str, Any]:
+        """Execute a GraphQL query and raise useful errors returned by Cloudflare."""
+        response = requests.post(
+            f"{self.base_url}/graphql",
+            headers=self.headers,
+            json={"query": query},
+            timeout=15,
+        )
+        response.raise_for_status()
+        result = response.json()
+        errors = result.get("errors")
+
+        if errors:
+            messages = "; ".join(
+                str(error.get("message", error))
+                if isinstance(error, dict)
+                else str(error)
+                for error in errors
+            )
+            raise CloudflareGraphQLError(
+                f"Cloudflare GraphQL error while querying {resource}: {messages}"
+            )
+
+        return result
 
     def get_accounts(self) -> List[Dict[str, Any]]:
         """Retrieves all accounts associated with the token."""
@@ -75,7 +104,7 @@ class CloudflareClient:
                   clientIP
                   clientRequestHTTPHost
                   clientRequestPath
-                  clientRequestMethod
+                  clientRequestHTTPMethodName
                   edgeResponseStatus
                   clientCountryName
                   cacheStatus
@@ -89,14 +118,7 @@ class CloudflareClient:
           }}
         }}
         """
-        response = requests.post(
-            f"{self.base_url}/graphql",
-            headers=self.headers,
-            json={"query": query},
-            timeout=15,
-        )
-        response.raise_for_status()
-        result = response.json()
+        result = self._post_graphql(query, f"edge analytics for zone {zone_id}")
 
         try:
             return result["data"]["viewer"]["zones"][0]["httpRequestsAdaptiveGroups"]
@@ -122,21 +144,18 @@ class CloudflareClient:
                 }}
                 sum {{
                   requests
-                  cpuTime
+                }}
+                quantiles {{
+                  cpuTimeP50
                 }}
               }}
             }}
           }}
         }}
         """
-        response = requests.post(
-            f"{self.base_url}/graphql",
-            headers=self.headers,
-            json={"query": query},
-            timeout=15,
+        result = self._post_graphql(
+            query, f"Worker analytics for account {account_id}"
         )
-        response.raise_for_status()
-        result = response.json()
 
         try:
             return result["data"]["viewer"]["accounts"][0]["workersInvocationsAdaptive"]

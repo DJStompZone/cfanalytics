@@ -34,11 +34,27 @@ class DatabaseManager:
                 account_id VARCHAR,
                 request_date DATE,
                 script_name VARCHAR,
-                status_code INTEGER,
+                status VARCHAR,
                 invocation_count INTEGER,
-                cpu_time_us UBIGINT
+                cpu_time_p50_us UBIGINT
             );
         """)
+
+        worker_columns = {
+            row[1]
+            for row in self.conn.execute("PRAGMA table_info('worker_invocations')").fetchall()
+        }
+        if "status_code" in worker_columns:
+            self.conn.execute(
+                "ALTER TABLE worker_invocations RENAME COLUMN status_code TO status"
+            )
+            self.conn.execute(
+                "ALTER TABLE worker_invocations ALTER status SET DATA TYPE VARCHAR"
+            )
+        if "cpu_time_us" in worker_columns:
+            self.conn.execute(
+                "ALTER TABLE worker_invocations RENAME COLUMN cpu_time_us TO cpu_time_p50_us"
+            )
 
     def insert_edge_records(self, records: List[EdgeAnalyticsRecord]) -> None:
         """Bulk inserts edge analytics records into the database."""
@@ -80,9 +96,9 @@ class DatabaseManager:
                 r.account_id,
                 r.request_date,
                 r.script_name,
-                r.status_code,
+                r.status,
                 r.invocation_count,
-                r.cpu_time_us,
+                r.cpu_time_p50_us,
             )
             for r in records
         ]

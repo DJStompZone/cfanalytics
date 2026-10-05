@@ -23,6 +23,6 @@ class WorkerAnalyticsRecord(BaseModel):
     account_id: str
     request_date: str
     script_name: str
-    status_code: int
+    status: str
     invocation_count: int
-    cpu_time_us: int
+    cpu_time_p50_us: int

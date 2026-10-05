@@ -124,7 +124,7 @@ The database is created automatically on the first aggregation run.
 | Table | Contents |
 | --- | --- |
 | `edge_requests` | Zone HTTP request aggregates by date, client IP, host, path, method, response status, country, and cache status. |
-| `worker_invocations` | Worker invocation aggregates by account, date, script, and status code. |
+| `worker_invocations` | Worker invocation aggregates by account, date, script, status, and P50 CPU time. |
 
 You can explore the data using DuckDB, for example:
 

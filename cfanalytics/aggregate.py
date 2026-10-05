@@ -55,13 +55,14 @@ def run_aggregation(api_token: str, db_path: str, target_date: str) -> None:
         for node in nodes:
             dimensions = node.get("dimensions", {})
             metrics = node.get("sum", {})
+            quantiles = node.get("quantiles", {})
             record = WorkerAnalyticsRecord(
                 account_id=account_id,
                 request_date=target_date,
                 script_name=dimensions.get("scriptName", "UNKNOWN"),
-                status_code=dimensions.get("status", 0),
+                status=dimensions.get("status", "UNKNOWN"),
                 invocation_count=metrics.get("requests", 0),
-                cpu_time_us=metrics.get("cpuTime", 0),
+                cpu_time_p50_us=quantiles.get("cpuTimeP50", 0),
             )
             worker_records.append(record)
 
