@@ -1,0 +1,22 @@
+[project]
+name = "cfanalytics"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "DJ Stomp",email = "85457381+DJStompZone@users.noreply.github.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13,<4.0"
+dependencies = [
+    "duckdb (>=1.5.6,<2.0.0)",
+    "pydantic (>=2.13.5,<3.0.0)",
+    "requests (>=2.34.2,<3.0.0)",
+    "matplotlib (>=3.11.2,<4.0.0)",
+    "plotly (>=7.1.0,<8.0.0)",
+    "streamlit (>=1.65.0,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
