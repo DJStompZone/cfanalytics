@@ -1,6 +1,6 @@
 [project]
 name = "cfanalytics"
-version = "0.1.1"
+version = "0.1.2"
 description = "Set of tools for Cloudflare analytics data retrieval, storage, aggregation, and analysis"
 authors = [
     {name = "DJ Stomp",email = "85457381+DJStompZone@users.noreply.github.com"}
@@ -16,6 +16,10 @@ dependencies = [
     "streamlit (>=1.65.0,<2.0.0)"
 ]
 
+[project.scripts]
+cfanalytics = "cfanalytics.cli:main"
+cfanalytics-aggregate = "cfanalytics.cli:aggregate_main"
+cfanalytics-dashboard = "cfanalytics.dashboard_cli:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

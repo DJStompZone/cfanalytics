@@ -14,16 +14,20 @@ It is intended for lightweight, self-hosted reporting across every account and z
 ## Requirements
 
 - Python `3.13` or later (but below Python 4)
-- [Poetry](https://python-poetry.org/)
+- `pip`
 - A Cloudflare API token authorized to list the intended accounts and zones and read their analytics data
 
 ## Installation
 
-Install the project's locked dependencies from the repository root:
+Clone the repository and install it from the project root:
 
-```text
-poetry install
+```bash
+git clone https://github.com/DJStompZone/cfanalytics.git
+cd cfanalytics
+python -m pip install .
 ```
+
+On Windows, use `py -3.13 -m pip install .` if `python` does not select Python 3.13. On Linux and macOS, use `python3 -m pip install .` if that is how Python 3.13 is installed.
 
 ## Quick Start
 
@@ -33,16 +37,16 @@ Set your Cloudflare API token for the current shell.
 
 ```powershell
 $env:CF_API_TOKEN = "your-token"
-poetry run python -m cfanalytics.cli aggregate
-poetry run streamlit run cfanalytics/dashboard.py
+cfanalytics-aggregate
+cfanalytics-dashboard
 ```
 
 ### Linux/macOS Bash
 
 ```bash
 export CF_API_TOKEN="your-token"
-poetry run python -m cfanalytics.cli aggregate
-poetry run streamlit run cfanalytics/dashboard.py
+cfanalytics-aggregate
+cfanalytics-dashboard
 ```
 
 The aggregation command imports yesterday's data by default. After at least one successful import, Streamlit prints a local URL for the dashboard.
@@ -50,7 +54,7 @@ The aggregation command imports yesterday's data by default. After at least one 
 To import a specific date instead:
 
 ```text
-poetry run python -m cfanalytics.cli aggregate --date 2026-10-04
+cfanalytics-aggregate --date 2026-10-04
 ```
 
 ## Configuration
@@ -66,33 +70,43 @@ To keep the database outside the repository, set `CF_DB_PATH` before running eit
 
 ```powershell
 $env:CF_DB_PATH = "$HOME\data\cloudflare_analytics.duckdb"
-poetry run python -m cfanalytics.cli aggregate --date 2026-10-04
-poetry run streamlit run cfanalytics/dashboard.py
+cfanalytics-aggregate --date 2026-10-04
+cfanalytics-dashboard
 ```
 
 ### Linux/macOS Bash
 
 ```bash
 export CF_DB_PATH="$HOME/data/cloudflare_analytics.duckdb"
-poetry run python -m cfanalytics.cli aggregate --date 2026-10-04
-poetry run streamlit run cfanalytics/dashboard.py
+cfanalytics-aggregate --date 2026-10-04
+cfanalytics-dashboard
 ```
 
 ## CLI Reference
 
-### `aggregate`
+### `cfanalytics-aggregate`
 
 Fetches all accessible accounts and zones, requests their analytics for a single day, and stores the returned records in DuckDB.
 
 ```text
-python -m cfanalytics.cli aggregate [--date YYYY-MM-DD]
+cfanalytics-aggregate [--date YYYY-MM-DD]
 ```
 
 When `--date` is omitted, the command uses yesterday's date. It requires `CF_API_TOKEN`.
 
-### `visualize`
+### `cfanalytics-dashboard`
 
-The CLI also exposes a `visualize --limit <n>` command intended to print the most active client IPs. The current database schema uses the `edge_requests` table, while this command still queries the legacy `cloudflare_requests` table. Until that is reconciled, use the Streamlit dashboard or query DuckDB directly.
+Starts the Streamlit dashboard:
+
+```text
+cfanalytics-dashboard
+```
+
+### `cfanalytics`
+
+Provides the original subcommand interface. `cfanalytics aggregate [--date YYYY-MM-DD]` is equivalent to `cfanalytics-aggregate [--date YYYY-MM-DD]`.
+
+The `cfanalytics visualize --limit <n>` subcommand is intended to print the most active client IPs. The current database schema uses the `edge_requests` table, while this report still queries the legacy `cloudflare_requests` table. Until that is reconciled, use the Streamlit dashboard or query DuckDB directly.
 
 ## Dashboard
 

@@ -80,9 +80,7 @@ class DatabaseManagerTests(unittest.TestCase):
                 [("/second", 20)],
             )
             self.assertEqual(
-                database.query(
-                    "SELECT invocation_count FROM worker_invocations"
-                ),
+                database.query("SELECT invocation_count FROM worker_invocations"),
                 [(20,)],
             )
             database.conn.close()
