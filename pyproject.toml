@@ -1,6 +1,6 @@
 [project]
 name = "cfanalytics"
-version = "0.1.0"
+version = "0.1.1"
 description = "Set of tools for Cloudflare analytics data retrieval, storage, aggregation, and analysis"
 authors = [
     {name = "DJ Stomp",email = "85457381+DJStompZone@users.noreply.github.com"}

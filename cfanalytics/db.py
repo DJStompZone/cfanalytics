@@ -11,6 +11,7 @@ class DatabaseManager:
     def __init__(self, db_path: str):
         self.conn = duckdb.connect(db_path)
         self._initialize_schema()
+        super().__init__()
 
     def _initialize_schema(self) -> None:
         """Creates the necessary tables if they do not exist."""
@@ -93,6 +94,28 @@ class DatabaseManager:
         """,
             df_data,
         )
+
+    def replace_records_for_date(
+        self,
+        request_date: str,
+        edge_records: List[EdgeAnalyticsRecord],
+        worker_records: List[WorkerAnalyticsRecord],
+    ) -> None:
+        """Atomically replaces all analytics records for a single date."""
+        self.conn.execute("BEGIN TRANSACTION")
+        try:
+            self.conn.execute(
+                "DELETE FROM edge_requests WHERE request_date = ?", [request_date]
+            )
+            self.conn.execute(
+                "DELETE FROM worker_invocations WHERE request_date = ?", [request_date]
+            )
+            self.insert_edge_records(edge_records)
+            self.insert_worker_records(worker_records)
+            self.conn.execute("COMMIT")
+        except Exception:
+            self.conn.execute("ROLLBACK")
+            raise
 
     def query(self, sql: str) -> List[Any]:
         """Executes a raw SQL query and returns the fetched results."""

@@ -65,14 +65,14 @@ def run_aggregation(api_token: str, db_path: str, target_date: str) -> None:
             )
             worker_records.append(record)
 
+    db.replace_records_for_date(target_date, edge_records, worker_records)
+
     if edge_records:
-        db.insert_edge_records(edge_records)
         sys.stdout.write(f"Successfully inserted {len(edge_records)} edge records.\n")
     else:
         sys.stdout.write("No edge records found to insert.\n")
 
     if worker_records:
-        db.insert_worker_records(worker_records)
         sys.stdout.write(
             f"Successfully inserted {len(worker_records)} worker records.\n"
         )

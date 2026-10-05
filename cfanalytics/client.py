@@ -14,6 +14,7 @@ class CloudflareClient:
             "Authorization": f"Bearer {self.api_token}",
             "Content-Type": "application/json",
         }
+        super().__init__()
 
     def get_accounts(self) -> List[Dict[str, Any]]:
         """Retrieves all accounts associated with the token."""
