@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 from typing import Optional
 
+
 class EdgeAnalyticsRecord(BaseModel):
     """Expanded record for zone-level HTTP edge traffic."""
+
     zone_name: str
     request_date: str
     client_ip: str
@@ -15,8 +17,10 @@ class EdgeAnalyticsRecord(BaseModel):
     request_count: int
     bytes_transferred: int
 
+
 class WorkerAnalyticsRecord(BaseModel):
     """Account-level record for Cloudflare Worker invocations."""
+
     account_id: str
     request_date: str
     script_name: str
