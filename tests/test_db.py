@@ -2,6 +2,7 @@
 
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 
 import duckdb
@@ -113,5 +114,20 @@ class DatabaseManagerTests(unittest.TestCase):
             self.assertEqual(
                 database.query("SELECT invocation_count FROM worker_invocations"),
                 [(20,)],
+            )
+            database.conn.close()
+
+    def test_get_missing_aggregation_dates_skips_completed_dates(self) -> None:
+        """Backfills only dates that have not completed successfully."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            database_path = Path(temp_dir) / "analytics.duckdb"
+            database = DatabaseManager(str(database_path))
+            end_date = date(2026, 10, 4)
+
+            database.replace_records_for_date("2026-10-03", [], [])
+
+            self.assertEqual(
+                database.get_missing_aggregation_dates(3, end_date),
+                ["2026-10-02", "2026-10-04"],
             )
             database.conn.close()

@@ -1,33 +1,45 @@
 """Command-line interface for the analytics pipeline."""
 
 import argparse
-import datetime
 import os
 import sys
-from cfanalytics.aggregate import run_aggregation
+from cfanalytics.aggregate import get_latest_complete_date, run_aggregation, run_backfill
+from cfanalytics.client import CloudflareAPIError
 from cfanalytics.visualize import print_top_ips
 
 
-def run_aggregate(target_date: str | None = None) -> None:
-    """Run aggregation for the requested date or yesterday by default."""
+def run_aggregate(target_date: str | None = None, backfill: bool = False) -> None:
+    """Run aggregation for one requested date or all recent missing dates."""
     api_token = os.environ.get("CF_API_TOKEN")
     if not api_token:
         sys.stdout.write("Error: CF_API_TOKEN environment variable is not set.\n")
         sys.exit(1)
 
-    if not target_date:
-        target_date = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
-
     db_path = os.environ.get("CF_DB_PATH", "cloudflare_analytics.duckdb")
-    run_aggregation(api_token, db_path, target_date)
+    try:
+        if backfill:
+            run_backfill(api_token, db_path)
+            return
+
+        if not target_date:
+            target_date = get_latest_complete_date().isoformat()
+
+        run_aggregation(api_token, db_path, target_date)
+    except CloudflareAPIError as error:
+        sys.stderr.write(f"Error: {error}\n")
+        sys.exit(1)
 
 
 def aggregate_main() -> None:
     """Entry point for the aggregation console script."""
     parser = argparse.ArgumentParser(description="Fetch and store Cloudflare analytics")
-    parser.add_argument("--date", help="Target date override (YYYY-MM-DD)")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--date", help="Target date override (YYYY-MM-DD)")
+    mode.add_argument(
+        "--backfill", action="store_true", help="Fetch missing dates from the last 30 days"
+    )
     args = parser.parse_args()
-    run_aggregate(args.date)
+    run_aggregate(args.date, args.backfill)
 
 
 def main() -> None:
@@ -38,8 +50,12 @@ def main() -> None:
     agg_parser = subparsers.add_parser(
         "aggregate", help="Fetch and store yesterday's analytics data"
     )
-    agg_parser.add_argument(
+    mode = agg_parser.add_mutually_exclusive_group()
+    mode.add_argument(
         "--date", help="Target date override (YYYY-MM-DD)", default=None
+    )
+    mode.add_argument(
+        "--backfill", action="store_true", help="Fetch missing dates from the last 30 days"
     )
 
     vis_parser = subparsers.add_parser(
@@ -52,7 +68,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "aggregate":
-        run_aggregate(args.date)
+        run_aggregate(args.date, args.backfill)
 
     elif args.command == "visualize":
         db_path = os.environ.get("CF_DB_PATH", "cloudflare_analytics.duckdb")

@@ -29,6 +29,8 @@ python -m pip install .
 
 On Windows, use `py -3.13 -m pip install .` if `python` does not select Python 3.13. On Linux and macOS, use `python3 -m pip install .` if that is how Python 3.13 is installed.
 
+After pulling a newer revision, run `python -m pip install --upgrade .` from the repository root to refresh the installed commands.
+
 ## Quick Start
 
 Set your Cloudflare API token for the current shell.
@@ -55,6 +57,12 @@ To import a specific date instead:
 
 ```text
 cfanalytics-aggregate --date 2026-10-04
+```
+
+To backfill only dates not already marked as complete in the previous 30 days:
+
+```text
+cfanalytics-aggregate --backfill
 ```
 
 ## Configuration
@@ -93,6 +101,8 @@ cfanalytics-aggregate [--date YYYY-MM-DD]
 ```
 
 When `--date` is omitted, the command uses yesterday's date. It requires `CF_API_TOKEN`.
+
+Use `--backfill` to fetch only dates missing from the last 30 UTC calendar days, ending yesterday UTC. Each successful run records its completion transactionally, so later backfills skip it even when Cloudflare returned no traffic records.
 
 ### `cfanalytics-dashboard`
 
@@ -140,6 +150,7 @@ ORDER BY requests DESC;
 ## Operational Notes
 
 - Re-running aggregation for a date replaces all stored edge and Worker records for that date. The replacement is transactional, so a failed database write leaves the previous data intact.
+- Cloudflare requests retry up to five times after timeouts, connection errors, rate limits, and transient server errors. Retry delays use bounded exponential backoff and honor `Retry-After` when provided.
 - The database may contain client IP addresses and request paths. Store it securely and follow your organization's data-retention and privacy requirements.
 - A token's accessible accounts and zones determine what data is imported.
 

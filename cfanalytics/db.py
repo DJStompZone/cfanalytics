@@ -1,5 +1,6 @@
 """Database connection and schema management."""
 
+from datetime import date, timedelta
 from typing import Any, List
 import duckdb
 from cfanalytics.models import EdgeAnalyticsRecord, WorkerAnalyticsRecord
@@ -37,6 +38,11 @@ class DatabaseManager:
                 status VARCHAR,
                 invocation_count INTEGER,
                 cpu_time_p50_us UBIGINT
+            );
+
+            CREATE TABLE IF NOT EXISTS aggregation_runs (
+                request_date DATE PRIMARY KEY,
+                completed_at TIMESTAMP NOT NULL
             );
         """)
 
@@ -128,10 +134,46 @@ class DatabaseManager:
             )
             self.insert_edge_records(edge_records)
             self.insert_worker_records(worker_records)
+            self.conn.execute(
+                "DELETE FROM aggregation_runs WHERE request_date = ?", [request_date]
+            )
+            self.conn.execute(
+                """
+                INSERT INTO aggregation_runs (request_date, completed_at)
+                VALUES (?, current_timestamp)
+                """,
+                [request_date],
+            )
             self.conn.execute("COMMIT")
         except Exception:
             self.conn.execute("ROLLBACK")
             raise
+
+    def get_missing_aggregation_dates(
+        self, days: int, end_date: date
+    ) -> List[str]:
+        """Returns uncompleted dates from a trailing date window."""
+        if days < 1:
+            raise ValueError("days must be at least 1")
+
+        start_date = end_date - timedelta(days=days - 1)
+        completed_dates = {
+            row[0]
+            for row in self.conn.execute(
+                """
+                SELECT request_date
+                FROM aggregation_runs
+                WHERE request_date BETWEEN ? AND ?
+                """,
+                [start_date, end_date],
+            ).fetchall()
+        }
+
+        return [
+            (start_date + timedelta(days=offset)).isoformat()
+            for offset in range(days)
+            if start_date + timedelta(days=offset) not in completed_dates
+        ]
 
     def query(self, sql: str) -> List[Any]:
         """Executes a raw SQL query and returns the fetched results."""
