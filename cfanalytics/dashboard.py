@@ -10,6 +10,19 @@ import streamlit as st
 DB_PATH = os.environ.get("CF_DB_PATH", "cloudflare_analytics.duckdb")
 
 
+def require_pyarrow() -> None:
+    """Show an actionable error when the required PyArrow binary is unavailable."""
+    try:
+        import pyarrow
+    except ImportError:
+        st.error(
+            "PyArrow is unavailable or incomplete. Run "
+            "`python -m pip install --force-reinstall --no-cache-dir pyarrow` "
+            "and restart the dashboard."
+        )
+        st.stop()
+
+
 @st.cache_resource
 def get_db_connection() -> duckdb.DuckDBPyConnection:
     """Establishes a cached, read-only connection to the DuckDB database."""
@@ -276,6 +289,7 @@ def main() -> None:
     """Main application entry point."""
     st.set_page_config(page_title="Cloudflare Analytics", page_icon="☁️", layout="wide")
 
+    require_pyarrow()
     conn = get_db_connection()
     view_mode, selected_target, start_date, end_date = render_sidebar(conn)
 

@@ -154,6 +154,16 @@ ORDER BY requests DESC;
 - The database may contain client IP addresses and request paths. Store it securely and follow your organization's data-retention and privacy requirements.
 - A token's accessible accounts and zones determine what data is imported.
 
+## Troubleshooting
+
+### `No module named 'pyarrow.lib'`
+
+The dashboard needs PyArrow's compiled binary module to display DuckDB dataframes. Repair the local PyArrow installation, then restart the dashboard:
+
+```text
+python -m pip install --force-reinstall --no-cache-dir pyarrow
+```
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
